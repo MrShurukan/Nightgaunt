@@ -1,0 +1,11 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<project name="Nightgaunt" default="copyToLocalServer" basedir = ".">
+
+    <property name="jarVersion" value="1.0"/>
+    <basename file="${basedir}" property="project.projectname"/>
+    <property name="project.pluginsLocation" location="D:\SpigotTestServer\plugins"/>
+
+    <target name="copyToLocalServer" description="Create a jar for the project">
+        <copy file=".\target\${project.projectname}-${jarVersion}.jar" tofile="${project.pluginsLocation}\${project.projectname}-${jarVersion}.jar" overwrite="true"/>
+    </target>
+</project>

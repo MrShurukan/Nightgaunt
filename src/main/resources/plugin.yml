@@ -1,0 +1,28 @@
+﻿name: Nightgaunt
+version: 1.0
+main: mrshurukan.nightgaunt.Nightgaunt
+api-version: '1.21.3'
+
+description: An obedient plugin, that follows my commands
+author: MrShurukan
+
+commands:
+  togglearmor:
+    description: Equips or stashes your armor.
+    usage: /<command>; /tg
+    aliases: [tg]
+
+  equip:
+    description: Equips your armor.
+    usage: /<command>; /eq
+    aliases: [eq]
+
+  stash:
+    description: Stashes your armor. Later can be retrieved with /equip
+    usage: /<command>; /st
+    aliases: [st]
+
+#  invisiblearmor:
+#    description: Toggles between visible and invisible armor
+#    usage: /<command>
+#    aliases: [inv]
