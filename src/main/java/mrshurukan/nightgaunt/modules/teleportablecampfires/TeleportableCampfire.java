@@ -1,6 +1,5 @@
 package mrshurukan.nightgaunt.modules.teleportablecampfires;
 
-import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
@@ -13,6 +12,7 @@ import java.util.UUID;
 public class TeleportableCampfire implements ConfigurationSerializable {
     private final int id;
     private final UUID ownerUUID;
+    private final String ownerName;
     private String name;
     private final Location location;
     private Location teleportPoint;
@@ -26,16 +26,17 @@ public class TeleportableCampfire implements ConfigurationSerializable {
         this.id = id;
         this.name = name;
         this.ownerUUID = owner.getUniqueId();
+        this.ownerName = owner.getName();
         location = campfireBlock.getLocation();
 
         locateTeleportPoint(owner);
-        Bukkit.broadcastMessage(String.format("Hi! I'm a campfire, I was created.\n%s", this));
     }
 
-    private TeleportableCampfire(int id, String name, UUID ownerUUID, Location location, Location teleportPoint) {
+    private TeleportableCampfire(int id, String name, UUID ownerUUID, String ownerName, Location location, Location teleportPoint) {
         this.id = id;
         this.name = name;
         this.ownerUUID = ownerUUID;
+        this.ownerName = ownerName;
         this.location = location;
         this.teleportPoint = teleportPoint;
     }
@@ -49,12 +50,6 @@ public class TeleportableCampfire implements ConfigurationSerializable {
                     // We are interested in blocks player can stand on
                     Location seekLocation = location.clone().add(xOffset, yOffset, zOffset);
                     if (seekLocation.getBlock().isPassable()) continue;
-
-                    Bukkit.broadcastMessage(
-                            String.format("Analyzing block: %s %d %d %d",
-                                    seekLocation.getBlock().getType(),
-                                    (int)seekLocation.getX(), (int)seekLocation.getY(), (int)seekLocation.getZ())
-                    );
 
                     // If the block is not passable we need to see if you can stand on top
                     // (i.e. there are at least two passable blocks above)
@@ -88,6 +83,12 @@ public class TeleportableCampfire implements ConfigurationSerializable {
     public int getId() {
         return id;
     }
+    public UUID getOwnerUUID() {
+        return ownerUUID;
+    }
+    public String getOwnerName() {
+        return ownerName;
+    }
 
     @Override
     public Map<String, Object> serialize() {
@@ -95,6 +96,7 @@ public class TeleportableCampfire implements ConfigurationSerializable {
                 "id", id,
                 "name", name,
                 "ownerUUID", ownerUUID.toString(),
+                "ownerName", ownerName,
                 "location", location,
                 "teleportPoint", teleportPoint
         );
@@ -105,8 +107,8 @@ public class TeleportableCampfire implements ConfigurationSerializable {
                 (Integer) configObject.get("id"),
                 (String) configObject.get("name"),
                 UUID.fromString((String) configObject.get("ownerUUID")),
-                (Location) configObject.get("location"),
-                (Location) configObject.get("teleportPoint"));
+                (String) configObject.get("ownerName"),
+                (Location) configObject.get("location"), (Location) configObject.get("teleportPoint"));
     }
 
     public String toString() {

@@ -40,9 +40,7 @@ public class DebugCommand implements CommandExecutor {
     private boolean processCampfireCommand(CommandSender commandSender, Command command, String label, String[] args) {
         switch (args[1]) {
             case "list":
-                String basePath = TeleportableCampfireModule.getBaseConfigPath();
-                List<TeleportableCampfire> campfires =
-                        (List<TeleportableCampfire>) plugin.getConfig().getList(basePath + ".campfires");
+                List<TeleportableCampfire> campfires = TeleportableCampfireModule.getCampfireList(plugin);
 
                 if (campfires != null)
                     commandSender.sendMessage(campfires.toString());

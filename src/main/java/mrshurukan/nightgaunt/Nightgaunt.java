@@ -1,7 +1,7 @@
 package mrshurukan.nightgaunt;
 
 import mrshurukan.nightgaunt.commands.*;
-import mrshurukan.nightgaunt.listeners.TeleportableFireplaceListener;
+import mrshurukan.nightgaunt.listeners.TeleportableCampfireListener;
 import mrshurukan.nightgaunt.modules.ArmorStashModule;
 import mrshurukan.nightgaunt.modules.teleportablecampfires.TeleportableCampfire;
 import mrshurukan.nightgaunt.modules.teleportablecampfires.TeleportableCampfireModule;
@@ -15,7 +15,7 @@ public class Nightgaunt extends JavaPlugin {
 
     // Plugin modules
     public ArmorStashModule armorStash;
-    public TeleportableCampfireModule teleportableFireplace;
+    public TeleportableCampfireModule teleportableCampfire;
 
     @Override
     public void onEnable() {
@@ -27,7 +27,7 @@ public class Nightgaunt extends JavaPlugin {
         config = getConfig();
 
         // Events
-        getServer().getPluginManager().registerEvents(new TeleportableFireplaceListener(this), this);
+        getServer().getPluginManager().registerEvents(new TeleportableCampfireListener(this), this);
 
         // Commands
         CommandExecutor toggleArmorCommand = new ToggleArmorCommand(this);
@@ -43,7 +43,7 @@ public class Nightgaunt extends JavaPlugin {
         getCommand("debugnightgaunt").setExecutor(debugCommand);
 
         armorStash = new ArmorStashModule(this, config);
-        teleportableFireplace = new TeleportableCampfireModule(this, config);
+        teleportableCampfire = new TeleportableCampfireModule(this, config);
 
         getLogger().info("Nightgaunt reporting for duty");
     }
