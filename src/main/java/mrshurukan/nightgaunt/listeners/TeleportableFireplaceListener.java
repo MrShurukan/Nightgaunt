@@ -92,8 +92,7 @@ public class TeleportableFireplaceListener implements Listener {
                 // Jackpot!
                 if (block.getType() == Material.CAMPFIRE) {
                     Bukkit.getScheduler().callSyncMethod(plugin, () -> {
-                        // Bukkit.broadcastMessage("NUH-UH, NOT YET");
-                        plugin.createNewTeleportableCampfire(block.getLocation());
+                        plugin.teleportableFireplace.createNewTeleportableCampfire(block.getLocation(), finalPlayerOwner);
                         item.remove();
                         return null;
                     });

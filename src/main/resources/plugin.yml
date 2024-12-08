@@ -22,7 +22,6 @@ commands:
     usage: /<command>; /st
     aliases: [st]
 
-#  invisiblearmor:
-#    description: Toggles between visible and invisible armor
-#    usage: /<command>
-#    aliases: [inv]
+  debugNightgaunt:
+    description: Print or do debug stuff for Nightgaunt
+    usage: /<command> campfire list

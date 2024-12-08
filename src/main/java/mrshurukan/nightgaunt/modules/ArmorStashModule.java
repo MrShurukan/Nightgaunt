@@ -9,11 +9,11 @@ import org.bukkit.inventory.ItemStack;
 import java.util.Arrays;
 import java.util.Objects;
 
-public class ArmorStash {
+public class ArmorStashModule {
     private final Nightgaunt plugin;
     private final FileConfiguration config;
 
-    public ArmorStash(Nightgaunt plugin, FileConfiguration config) {
+    public ArmorStashModule(Nightgaunt plugin, FileConfiguration config) {
         this.plugin = plugin;
         this.config = config;
     }
