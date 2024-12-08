@@ -9,6 +9,8 @@ import org.bukkit.block.BlockFace;
 import org.bukkit.block.data.Directional;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
 
 import java.util.*;
 
@@ -62,9 +64,74 @@ public class TeleportableCampfireModule {
 
         config.set(getBaseConfigPath() + ".campfires", campfires);
         plugin.saveConfig();
+
+        Bukkit.broadcastMessage("A new campfire was just created!");
     }
 
     public static String getBaseConfigPath() {
         return "teleportableCampfires";
+    }
+
+    public static List<TeleportableCampfire> getCampfireList(Nightgaunt plugin) {
+        List<TeleportableCampfire> list = (List<TeleportableCampfire>) plugin.getConfig().getList(getBaseConfigPath() + ".campfires");
+
+        if (list == null) return new ArrayList<>();
+        return list;
+    }
+
+    public static Optional<TeleportableCampfire> findCampfireById(List<TeleportableCampfire> list, int id) {
+        return list.stream().filter(x -> x.getId() == id).findAny();
+    }
+
+    public static Optional<TeleportableCampfire> findCampfireByLocation(List<TeleportableCampfire> list, Location location) {
+        return list.stream().filter(x -> x.getLocation().equals(location)).findAny();
+    }
+
+    public void teleportPlayer(Player player, int campfireId) {
+        List<TeleportableCampfire> campfires = getCampfireList(plugin);
+        Optional<TeleportableCampfire> campfireOptional = findCampfireById(campfires, campfireId);
+
+        if (!campfireOptional.isPresent()) {
+            player.sendMessage("Can't find campfire with id " + campfireId);
+            return;
+        }
+
+        TeleportableCampfire campfire = campfireOptional.get();
+
+        // First let's get some effects on the player
+        player.addPotionEffect(new PotionEffect(PotionEffectType.NAUSEA, 1000, 2));
+        player.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, 100, 2));
+        player.getWorld().playSound(player.getLocation(), Sound.BLOCK_PORTAL_AMBIENT, 0.4f, 1.5f);
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+            // Wait for 3 seconds
+            try {
+                Thread.sleep(3000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
+            Bukkit.getScheduler().callSyncMethod(plugin, () -> {
+                player.removePotionEffect(PotionEffectType.NAUSEA);
+                // Play the sound at the original place
+                playTeleportSound(player);
+                // Teleport
+                // Add 0.5, 0, 0.5 so you get teleported to the center of the block
+                player.teleport(campfire.getTeleportPoint().clone().add(0.5, 0, 0.5));
+                // Play sound at the new place
+                playTeleportSound(player);
+
+                return null;
+            });
+        });
+    }
+
+    private static void playTeleportSound(Player player) {
+        player.getWorld().playSound(player.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 0.4f, 1.2f);
+        player.getWorld().playSound(player.getLocation(), Sound.BLOCK_END_PORTAL_FRAME_FILL, 0.1f, 0.7f);
+    }
+
+    public void sitNear(Player player, int campfireId) {
+        player.sendMessage("Yeah, no, just imagine you are sitting rn");
+        player.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, 100, 2));;
     }
 }
