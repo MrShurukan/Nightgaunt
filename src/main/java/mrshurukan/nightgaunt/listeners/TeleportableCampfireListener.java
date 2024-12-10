@@ -16,6 +16,7 @@ import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.SignChangeEvent;
 import org.bukkit.event.entity.ItemSpawnEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
@@ -36,7 +37,7 @@ public class TeleportableCampfireListener implements Listener {
     public TeleportableCampfireListener(Nightgaunt plugin) {
         this.plugin = plugin;
     }
-    
+
     @EventHandler
     public void onItemSpawn(ItemSpawnEvent event) {
         Item item = event.getEntity();
@@ -161,8 +162,6 @@ public class TeleportableCampfireListener implements Listener {
 
             ItemStack clickedItem = event.getCurrentItem();
             if (clickedItem == null) {
-                sendErrorAndCloseInventory(event, "There was an error processing clicked campfire " +
-                        "(clickedItem == null)");
                 return;
             }
 
@@ -248,6 +247,20 @@ public class TeleportableCampfireListener implements Listener {
 
             player.closeInventory();
         }
+    }
+
+    @EventHandler
+    private void onBlockBreakEvent(BlockBreakEvent event) {
+        Block block = event.getBlock();
+
+        Optional<TeleportableCampfire> campfireOptional
+                = plugin.teleportableCampfire.findCampfireByLocation(block.getLocation());
+
+        if (!campfireOptional.isPresent())
+            return;
+
+        TeleportableCampfire campfire = campfireOptional.get();
+        plugin.teleportableCampfire.teleportableCampfireDestroyed(campfire, event);
     }
 
     private ItemStack prepareMenuItem(TeleportableCampfire campfire, TeleportableCampfire selectedCampfire) {

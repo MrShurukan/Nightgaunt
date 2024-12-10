@@ -1,20 +1,19 @@
 package mrshurukan.nightgaunt.modules.teleportablecampfires;
 
 import mrshurukan.nightgaunt.Nightgaunt;
-import org.bukkit.Bukkit;
-import org.bukkit.Location;
-import org.bukkit.Material;
-import org.bukkit.Sound;
+import org.bukkit.*;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.data.Directional;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
+import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.checkerframework.checker.units.qual.N;
 
 import javax.management.InstanceNotFoundException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class TeleportableCampfireModule {
     private final Nightgaunt plugin;
@@ -64,10 +63,32 @@ public class TeleportableCampfireModule {
             campfires = new ArrayList<>();
         campfires.add(fireplace);
 
-        config.set(getBaseConfigPath() + ".campfires", campfires);
+        writeCampfireListToConfig(campfires);
         plugin.saveConfig();
 
         Bukkit.broadcastMessage("A new campfire was just created!");
+    }
+
+    public void teleportableCampfireDestroyed(TeleportableCampfire campfire, BlockBreakEvent event) {
+        // event.setExpToDrop(100);
+        // event.setDropItems(false);
+        event.getPlayer().addPotionEffect(new PotionEffect(PotionEffectType.NAUSEA, 125, 1));
+        event.getPlayer().addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 100, 1));
+        event.getPlayer().addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 100, 1));
+        World world = event.getPlayer().getWorld();
+        world.playSound(event.getPlayer().getLocation(), Sound.ENTITY_ZOMBIE_DESTROY_EGG, 0.7f, 0.4f);
+        world.playSound(event.getPlayer().getLocation(), Sound.ENTITY_LIGHTNING_BOLT_THUNDER, 0.5f, 0.4f);
+        world.playSound(event.getPlayer().getLocation(), Sound.BLOCK_BELL_RESONATE, 0.2f, 0.4f);
+
+        Bukkit.broadcastMessage(String.format("§c%s§r broke a campfire.",
+                event.getPlayer().getName()));
+        Bukkit.broadcastMessage(String.format("'§e%s§r' is no more.",
+                campfire.getName()));
+
+        List<TeleportableCampfire> campfiresWithoutDestroyed = getCampfireList()
+                .stream().filter(x -> x.getId() != campfire.getId()).collect(Collectors.toList());
+        writeCampfireListToConfig(campfiresWithoutDestroyed);
+        plugin.saveConfig();
     }
 
     public static String getBaseConfigPath() {
@@ -101,14 +122,14 @@ public class TeleportableCampfireModule {
 
     public void updateCampfireInConfig(TeleportableCampfire campfire) throws InstanceNotFoundException {
         String basePath = getBaseConfigPath();
-        List<TeleportableCampfire> campfires = (List<TeleportableCampfire>) config.getList(basePath + ".campfires");
+        List<TeleportableCampfire> campfires = getCampfireList();
 
         // Find the campfire to update
         for (int i = 0; i < campfires.size(); i++) {
             TeleportableCampfire c = campfires.get(i);
             if (c.getId() == campfire.getId()) {
                 campfires.set(i, campfire);
-                config.set(getBaseConfigPath() + ".campfires", campfires);
+                writeCampfireListToConfig(campfires);
                 plugin.saveConfig();
 
                 return;
@@ -116,6 +137,10 @@ public class TeleportableCampfireModule {
         }
 
         throw new InstanceNotFoundException("Can't find the campfire with id: " + campfire.getId());
+    }
+
+    private void writeCampfireListToConfig(List<TeleportableCampfire> campfires) {
+        config.set(getBaseConfigPath() + ".campfires", campfires);
     }
 
     public void teleportPlayer(Player player, int campfireId) {
