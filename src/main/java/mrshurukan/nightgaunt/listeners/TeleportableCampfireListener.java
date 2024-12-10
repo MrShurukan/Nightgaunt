@@ -36,6 +36,45 @@ public class TeleportableCampfireListener implements Listener {
     public TeleportableCampfireListener(Nightgaunt plugin) {
         this.plugin = plugin;
     }
+    
+    @EventHandler
+    public void onItemSpawn(ItemSpawnEvent event) {
+        Item item = event.getEntity();
+        Player playerOwner = null;
+        if (item.getThrower() != null)
+            playerOwner = Bukkit.getPlayer(item.getThrower());
+
+        if (playerOwner == null || item.getItemStack().getType() != Material.GHAST_TEAR) return;
+
+        Player finalPlayerOwner = playerOwner;
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+            // Do 3 tries to see if ghast tear is above the campfire
+            for (int tryNumber = 1; tryNumber <= 3; tryNumber++) {
+                // Check if the tear is above the campfire
+                Location location = item.getLocation();
+
+                Block block = location.getWorld()
+                        .getBlockAt(location.getBlockX(), location.getBlockY(), location.getBlockZ());
+
+                // Jackpot!
+                if (block.getType() == Material.CAMPFIRE) {
+                    Bukkit.getScheduler().callSyncMethod(plugin, () -> {
+                        plugin.teleportableCampfire.createNewTeleportableCampfire(block.getLocation(), finalPlayerOwner);
+                        item.remove();
+                        return null;
+                    });
+
+                    return;
+                }
+
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        });
+    }
 
     @EventHandler
     public void onPlayerInteractEvent(PlayerInteractEvent event) {
@@ -69,46 +108,6 @@ public class TeleportableCampfireListener implements Listener {
         player.openInventory(help);
     }
 
-    private ItemStack prepareMenuItem(TeleportableCampfire campfire, TeleportableCampfire selectedCampfire) {
-        ItemStack itemStack = new ItemStack(Material.SOUL_CAMPFIRE);
-        ItemMeta itemStackMeta = itemStack.getItemMeta();
-
-        ArrayList<String> lore = new ArrayList<>();
-
-        lore.add(String.format("Created by %s", campfire.getOwnerName()));
-        boolean isThisCampfire = campfire.getId() == selectedCampfire.getId();
-        if (isThisCampfire) {
-            lore.add(" ");
-            lore.add("§CYou are looking at this campfire!");
-        }
-
-        itemStackMeta.setLore(lore);
-        itemStackMeta.setDisplayName(String.format("§6§l%s", campfire.getName()));
-
-        NamespacedKey keyId = createNamespacedKeyCampfireId();
-        itemStackMeta.getPersistentDataContainer().set(keyId, PersistentDataType.INTEGER, campfire.getId());
-
-        NamespacedKey keyIsThisCampfire = createNamespacedKeyIsThisCampfire();
-        itemStackMeta.getPersistentDataContainer().set(keyIsThisCampfire, PersistentDataType.BOOLEAN, isThisCampfire);
-
-        NamespacedKey keyCampfireClickedId = createNamespacedKeyCampfireClickedId();
-        itemStackMeta.getPersistentDataContainer()
-                .set(keyCampfireClickedId, PersistentDataType.INTEGER, selectedCampfire.getId());
-
-        itemStack.setItemMeta(itemStackMeta);
-        return itemStack;
-    }
-
-    private NamespacedKey createNamespacedKeyCampfireId() {
-        return new NamespacedKey(plugin, "campfireId");
-    }
-    private NamespacedKey createNamespacedKeyIsThisCampfire() {
-        return new NamespacedKey(plugin, "isThisCampfire");
-    }
-    private NamespacedKey createNamespacedKeyCampfireClickedId() {
-        return new NamespacedKey(plugin, "campfireClickedId");
-    }
-
     @EventHandler
     private void onSignChangeEvent(SignChangeEvent signChangeEvent) {
         int x = signChangeEvent.getBlock().getX();
@@ -116,7 +115,7 @@ public class TeleportableCampfireListener implements Listener {
         int z = signChangeEvent.getBlock().getZ();
 
         int campfireId = plugin.getConfig().getInt(TeleportableCampfireModule.getBaseConfigPath()
-            + getRenameSignsCampfireIdKey(x, y, z), -1);
+                + getRenameSignsCampfireIdKey(x, y, z), -1);
 
         if (campfireId == -1)
             return;
@@ -251,6 +250,46 @@ public class TeleportableCampfireListener implements Listener {
         }
     }
 
+    private ItemStack prepareMenuItem(TeleportableCampfire campfire, TeleportableCampfire selectedCampfire) {
+        ItemStack itemStack = new ItemStack(Material.SOUL_CAMPFIRE);
+        ItemMeta itemStackMeta = itemStack.getItemMeta();
+
+        ArrayList<String> lore = new ArrayList<>();
+
+        lore.add(String.format("Created by %s", campfire.getOwnerName()));
+        boolean isThisCampfire = campfire.getId() == selectedCampfire.getId();
+        if (isThisCampfire) {
+            lore.add(" ");
+            lore.add("§CYou are looking at this campfire!");
+        }
+
+        itemStackMeta.setLore(lore);
+        itemStackMeta.setDisplayName(String.format("§6§l%s", campfire.getName()));
+
+        NamespacedKey keyId = createNamespacedKeyCampfireId();
+        itemStackMeta.getPersistentDataContainer().set(keyId, PersistentDataType.INTEGER, campfire.getId());
+
+        NamespacedKey keyIsThisCampfire = createNamespacedKeyIsThisCampfire();
+        itemStackMeta.getPersistentDataContainer().set(keyIsThisCampfire, PersistentDataType.BOOLEAN, isThisCampfire);
+
+        NamespacedKey keyCampfireClickedId = createNamespacedKeyCampfireClickedId();
+        itemStackMeta.getPersistentDataContainer()
+                .set(keyCampfireClickedId, PersistentDataType.INTEGER, selectedCampfire.getId());
+
+        itemStack.setItemMeta(itemStackMeta);
+        return itemStack;
+    }
+
+    private NamespacedKey createNamespacedKeyCampfireId() {
+        return new NamespacedKey(plugin, "campfireId");
+    }
+    private NamespacedKey createNamespacedKeyIsThisCampfire() {
+        return new NamespacedKey(plugin, "isThisCampfire");
+    }
+    private NamespacedKey createNamespacedKeyCampfireClickedId() {
+        return new NamespacedKey(plugin, "campfireClickedId");
+    }
+
     private static String getRenameSignsCampfireIdKey(int x, int y, int z) {
         return String.format(".renameSigns.%d:%d:%d.campfireId", x, y, z);
     }
@@ -266,44 +305,5 @@ public class TeleportableCampfireListener implements Listener {
     private void sendErrorAndCloseInventory(InventoryClickEvent event, String message) {
         event.getWhoClicked().sendMessage(message);
         event.getWhoClicked().closeInventory();
-    }
-
-    @EventHandler
-    public void onItemSpawn(ItemSpawnEvent event) {
-        Item item = event.getEntity();
-        Player playerOwner = null;
-        if (item.getThrower() != null)
-            playerOwner = Bukkit.getPlayer(item.getThrower());
-
-        if (playerOwner == null || item.getItemStack().getType() != Material.GHAST_TEAR) return;
-
-        Player finalPlayerOwner = playerOwner;
-        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
-            // Do 3 tries to see if ghast tear is above the campfire
-            for (int tryNumber = 1; tryNumber <= 3; tryNumber++) {
-                // Check if the tear is above the campfire
-                Location location = item.getLocation();
-
-                Block block = location.getWorld()
-                        .getBlockAt(location.getBlockX(), location.getBlockY(), location.getBlockZ());
-
-                // Jackpot!
-                if (block.getType() == Material.CAMPFIRE) {
-                    Bukkit.getScheduler().callSyncMethod(plugin, () -> {
-                        plugin.teleportableCampfire.createNewTeleportableCampfire(block.getLocation(), finalPlayerOwner);
-                        item.remove();
-                        return null;
-                    });
-
-                    return;
-                }
-
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-        });
     }
 }
