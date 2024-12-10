@@ -5,6 +5,7 @@ import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.configuration.serialization.ConfigurationSerializable;
 import org.bukkit.entity.Player;
+import org.bukkit.plugin.messaging.MessageTooLargeException;
 
 import java.util.Map;
 import java.util.UUID;
@@ -71,7 +72,8 @@ public class TeleportableCampfire implements ConfigurationSerializable {
     public String getName() {
         return name;
     }
-    public void setName(String name) {
+    public void setName(String name) throws MessageTooLargeException {
+        if (name.length() > 60) throw new MessageTooLargeException("Name can't be longer than 60 characters!");
         this.name = name;
     }
     public Location getLocation() {

@@ -1,6 +1,7 @@
 package mrshurukan.nightgaunt;
 
 import mrshurukan.nightgaunt.commands.*;
+import mrshurukan.nightgaunt.commands.debug.DebugCommand;
 import mrshurukan.nightgaunt.listeners.TeleportableCampfireListener;
 import mrshurukan.nightgaunt.modules.ArmorStashModule;
 import mrshurukan.nightgaunt.modules.teleportablecampfires.TeleportableCampfire;

@@ -11,7 +11,9 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
+import org.checkerframework.checker.units.qual.N;
 
+import javax.management.InstanceNotFoundException;
 import java.util.*;
 
 public class TeleportableCampfireModule {
@@ -72,7 +74,7 @@ public class TeleportableCampfireModule {
         return "teleportableCampfires";
     }
 
-    public static List<TeleportableCampfire> getCampfireList(Nightgaunt plugin) {
+    public List<TeleportableCampfire> getCampfireList() {
         List<TeleportableCampfire> list = (List<TeleportableCampfire>) plugin.getConfig().getList(getBaseConfigPath() + ".campfires");
 
         if (list == null) return new ArrayList<>();
@@ -83,13 +85,41 @@ public class TeleportableCampfireModule {
         return list.stream().filter(x -> x.getId() == id).findAny();
     }
 
+    public Optional<TeleportableCampfire> findCampfireById(int id) {
+        List<TeleportableCampfire> campfires = getCampfireList();
+        return findCampfireById(campfires, id);
+    }
+
     public static Optional<TeleportableCampfire> findCampfireByLocation(List<TeleportableCampfire> list, Location location) {
         return list.stream().filter(x -> x.getLocation().equals(location)).findAny();
     }
 
+    public Optional<TeleportableCampfire> findCampfireByLocation(Location location) {
+        List<TeleportableCampfire> campfires = getCampfireList();
+        return findCampfireByLocation(campfires, location);
+    }
+
+    public void updateCampfireInConfig(TeleportableCampfire campfire) throws InstanceNotFoundException {
+        String basePath = getBaseConfigPath();
+        List<TeleportableCampfire> campfires = (List<TeleportableCampfire>) config.getList(basePath + ".campfires");
+
+        // Find the campfire to update
+        for (int i = 0; i < campfires.size(); i++) {
+            TeleportableCampfire c = campfires.get(i);
+            if (c.getId() == campfire.getId()) {
+                campfires.set(i, campfire);
+                config.set(getBaseConfigPath() + ".campfires", campfires);
+                plugin.saveConfig();
+
+                return;
+            }
+        }
+
+        throw new InstanceNotFoundException("Can't find the campfire with id: " + campfire.getId());
+    }
+
     public void teleportPlayer(Player player, int campfireId) {
-        List<TeleportableCampfire> campfires = getCampfireList(plugin);
-        Optional<TeleportableCampfire> campfireOptional = findCampfireById(campfires, campfireId);
+        Optional<TeleportableCampfire> campfireOptional = findCampfireById(campfireId);
 
         if (!campfireOptional.isPresent()) {
             player.sendMessage("Can't find campfire with id " + campfireId);
@@ -131,7 +161,7 @@ public class TeleportableCampfireModule {
     }
 
     public void sitNear(Player player, int campfireId) {
-        player.sendMessage("Yeah, no, just imagine you are sitting rn");
+        player.sendMessage("Just imagine you are sitting rn");
         player.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, 100, 2));;
     }
 }
