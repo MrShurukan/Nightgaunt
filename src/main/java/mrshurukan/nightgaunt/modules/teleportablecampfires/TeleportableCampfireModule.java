@@ -226,7 +226,7 @@ public class TeleportableCampfireModule {
     }
 
     public void sitNear(Player player, int campfireId) {
-        player.sendMessage("Just imagine you are sitting rn");
-        player.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, 100, 2));;
+        // player.sendMessage("Just imagine you are sitting rn");
+        player.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, 250, 2));;
     }
 }

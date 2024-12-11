@@ -97,16 +97,17 @@ public class TeleportableCampfireListener implements Listener {
         event.setCancelled(true);
 
         Player player = event.getPlayer();
-        Inventory help = Bukkit.getServer().createInventory(player, 54, "Campfire Selector");
+        Inventory campfireSelector = Bukkit.getServer().createInventory(player, 54, "Campfire Selector");
 
         int slotNumber = 0;
         for (TeleportableCampfire campfire : campfires) {
             ItemStack itemStack = prepareMenuItem(campfire, selectedCampfire.get());
-            help.setItem(slotNumber++, itemStack);
+            campfireSelector.setItem(slotNumber++, itemStack);
         }
 
         //Here opens the inventory
-        player.openInventory(help);
+        player.openInventory(campfireSelector);
+        plugin.teleportableCampfire.sitNear(player, selectedCampfire.get().getId());
     }
 
     @EventHandler
