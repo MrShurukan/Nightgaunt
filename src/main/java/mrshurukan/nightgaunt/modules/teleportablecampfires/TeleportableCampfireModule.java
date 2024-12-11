@@ -7,6 +7,7 @@ import org.bukkit.block.data.Directional;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.checkerframework.checker.units.qual.N;
@@ -31,9 +32,34 @@ public class TeleportableCampfireModule {
             return;
         }
 
-        // Sound
-        location.getWorld().playSound(location, Sound.ENTITY_PLAYER_LEVELUP, 0.7f, 0.25f);
-        location.getWorld().playSound(location, Sound.ENTITY_LIGHTNING_BOLT_THUNDER, 0.2f, 3f);
+        // Register the fireplace
+        String basePath = getBaseConfigPath();
+        List<TeleportableCampfire> campfires = (List<TeleportableCampfire>) config.getList(basePath + ".campfires");
+        int nextId = 0;
+        if (campfires != null && !campfires.isEmpty())
+            nextId = campfires.stream()
+                .max(Comparator.comparingInt(TeleportableCampfire::getId))
+                .get()
+                .getId() + 1;
+
+
+        TeleportableCampfire campfire;
+        try {
+            campfire = new TeleportableCampfire(nextId, String.format("Campfire %d", nextId), location.getBlock(), owner);
+        }
+        catch (Exception e) {
+            owner.sendMessage("§4" + e.getMessage());
+            // location.getWorld().dropItem(location.clone().add(0, 0.2, 0), new ItemStack(Material.GHAST_TEAR));
+            owner.getInventory().addItem(new ItemStack(Material.GHAST_TEAR));
+            return;
+        }
+
+        if (campfires == null)
+            campfires = new ArrayList<>();
+        campfires.add(campfire);
+
+        writeCampfireListToConfig(campfires);
+        plugin.saveConfig();
 
         // Remember the original rotation
         BlockFace blockFace = ((Directional)location.getBlock().getBlockData()).getFacing();
@@ -46,25 +72,9 @@ public class TeleportableCampfireModule {
 
         location.getBlock().setBlockData(directionalBlockData);
 
-        // Register the fireplace
-        String basePath = getBaseConfigPath();
-        List<TeleportableCampfire> campfires = (List<TeleportableCampfire>) config.getList(basePath + ".campfires");
-        int nextId = 0;
-        if (campfires != null && !campfires.isEmpty())
-            nextId = campfires.stream()
-                .max(Comparator.comparingInt(TeleportableCampfire::getId))
-                .get()
-                .getId() + 1;
-
-        TeleportableCampfire fireplace =
-                new TeleportableCampfire(nextId, String.format("Campfire %d", nextId), location.getBlock(), owner);
-
-        if (campfires == null)
-            campfires = new ArrayList<>();
-        campfires.add(fireplace);
-
-        writeCampfireListToConfig(campfires);
-        plugin.saveConfig();
+        // Sound
+        location.getWorld().playSound(location, Sound.ENTITY_PLAYER_LEVELUP, 0.7f, 0.25f);
+        location.getWorld().playSound(location, Sound.ENTITY_LIGHTNING_BOLT_THUNDER, 0.2f, 3f);
 
         Bukkit.broadcastMessage("A new campfire was just created!");
     }
@@ -153,6 +163,25 @@ public class TeleportableCampfireModule {
         }
 
         TeleportableCampfire campfire = campfireOptional.get();
+
+        // Someone messed with the teleport location block.
+        // It's no longer safe to teleport there.
+        // We need to find a new block or conclude it's not possible
+        if (!campfire.hasSolidBlockUnderTeleportPoint()) {
+            try {
+                campfire.locateNewTeleportPoint();
+                updateCampfireInConfig(campfire);
+                plugin.saveConfig();
+            }
+            catch (Exception ignored) {
+                Bukkit.broadcastMessage(String.format(
+                        "Weird. It's no longer safe to teleport to campfire §l§e'%s'§r. " +
+                        "§4Someone destroyed solid blocks around it.",
+                        campfire.getName()));
+                return;
+            }
+        }
+
         if (player.getLevel() < teleportLevelCost && player.getGameMode() != GameMode.CREATIVE) {
             player.sendMessage(String.format(
                     "§4You don't have enough exp levels. You need at least §6%d§4 to travel", teleportLevelCost));

@@ -20,8 +20,8 @@ public class TeleportableCampfire implements ConfigurationSerializable {
 
     public TeleportableCampfire(int id, String name, Block campfireBlock, Player owner) throws Exception {
 
-        if (campfireBlock.getBlockData().getMaterial() != Material.SOUL_CAMPFIRE) {
-            throw new Exception("Can't create teleportable fireplace not on a soul campfire");
+        if (campfireBlock.getBlockData().getMaterial() != Material.CAMPFIRE) {
+            throw new Exception("Can't create teleportable fireplace not on a campfire");
         }
 
         this.id = id;
@@ -30,7 +30,7 @@ public class TeleportableCampfire implements ConfigurationSerializable {
         this.ownerName = owner.getName();
         location = campfireBlock.getLocation();
 
-        locateTeleportPoint(owner);
+        locateNewTeleportPoint();
     }
 
     private TeleportableCampfire(int id, String name, UUID ownerUUID, String ownerName, Location location, Location teleportPoint) {
@@ -42,7 +42,15 @@ public class TeleportableCampfire implements ConfigurationSerializable {
         this.teleportPoint = teleportPoint;
     }
 
-    private void locateTeleportPoint(Player owner) throws Exception {
+    public boolean hasSolidBlockUnderTeleportPoint() {
+        Block b = this.teleportPoint.clone().add(0, -1, 0).getBlock();
+        if (b.isPassable())
+            return false;
+
+        return true;
+    }
+
+    public void locateNewTeleportPoint() throws Exception {
         for (int yOffset = -2; yOffset <= 2; yOffset++) {
             for (int xOffset = -2; xOffset <= 2; xOffset++) {
                 for (int zOffset = -2; zOffset <= 2; zOffset++) {
@@ -64,9 +72,8 @@ public class TeleportableCampfire implements ConfigurationSerializable {
             }
         }
 
-        String errorMessage = "Can't create a fireplace at this location! There are no standable blocks in a 2 block radius";
-        owner.sendMessage(errorMessage);
-        throw new Exception(errorMessage);
+        throw new Exception("Can't create a fireplace at this location! " +
+                "There are no standable blocks in a 2 block radius");
     }
 
     public String getName() {
