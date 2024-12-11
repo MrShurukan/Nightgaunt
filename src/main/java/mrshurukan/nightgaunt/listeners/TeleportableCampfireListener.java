@@ -149,6 +149,11 @@ public class TeleportableCampfireListener implements Listener {
         signChangeEvent.getPlayer().sendMessage(
                 String.format("Renamed! New name is: §6§l'%s'", newName)
         );
+
+        // Cleanup the config
+        plugin.getConfig().set(TeleportableCampfireModule.getBaseConfigPath()
+                + getBaseRenameSignsKey(x, y, z), null);
+        plugin.saveConfig();
     }
 
     @EventHandler
@@ -210,7 +215,14 @@ public class TeleportableCampfireListener implements Listener {
 
                 TeleportableCampfire campfireToRename = campfireToRenameOptional.get();
                 TeleportableCampfire campfireClickedOn = campfireClickedOnOptional.get();
+
                 Location signLocation = campfireClickedOn.getLocation().clone().add(0, 1, 0);
+
+                if (signLocation.getBlock().getType() != Material.AIR) {
+                    player.closeInventory();
+                    player.sendMessage("The block above the campfire is obstructed. I can't create a sign for you to use!");
+                    return;
+                }
 
                 signLocation.getBlock().setType(Material.OAK_SIGN);
                 Sign sign = (Sign) signLocation.getBlock().getState();
@@ -304,7 +316,11 @@ public class TeleportableCampfireListener implements Listener {
     }
 
     private static String getRenameSignsCampfireIdKey(int x, int y, int z) {
-        return String.format(".renameSigns.%d:%d:%d.campfireId", x, y, z);
+        return getBaseRenameSignsKey(x, y, z) + ".campfireId";
+    }
+
+    private static String getBaseRenameSignsKey(int x, int y, int z) {
+        return String.format(".renameSigns.%d:%d:%d", x, y, z);
     }
 
     private static ArrayList<String> splitStringBySize(String str, int size) {

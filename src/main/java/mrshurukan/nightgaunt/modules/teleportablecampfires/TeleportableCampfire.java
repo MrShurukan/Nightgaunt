@@ -2,6 +2,7 @@ package mrshurukan.nightgaunt.modules.teleportablecampfires;
 
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.configuration.serialization.ConfigurationSerializable;
 import org.bukkit.entity.Player;
@@ -22,6 +23,18 @@ public class TeleportableCampfire implements ConfigurationSerializable {
 
         if (campfireBlock.getBlockData().getMaterial() != Material.CAMPFIRE) {
             throw new Exception("Can't create teleportable fireplace not on a campfire");
+        }
+
+        if (campfireBlock.getWorld().getEnvironment() != World.Environment.NORMAL) {
+
+            int x = campfireBlock.getX();
+            int y = campfireBlock.getY();
+            int z = campfireBlock.getZ();
+            // Create a TNT explosion (power = 4f)
+            // And light blocks on fire (true)
+            campfireBlock.getWorld().createExplosion(x, y + 0.5f, z, 4f, true);
+
+            throw new Exception("Campfire was overpowered!\n[don't create campfires in the Nether or the End dummy]");
         }
 
         this.id = id;
