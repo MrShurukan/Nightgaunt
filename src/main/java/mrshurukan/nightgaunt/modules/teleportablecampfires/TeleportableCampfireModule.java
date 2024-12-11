@@ -143,6 +143,7 @@ public class TeleportableCampfireModule {
         config.set(getBaseConfigPath() + ".campfires", campfires);
     }
 
+    private int teleportLevelCost = 1;
     public void teleportPlayer(Player player, int campfireId) {
         Optional<TeleportableCampfire> campfireOptional = findCampfireById(campfireId);
 
@@ -152,6 +153,11 @@ public class TeleportableCampfireModule {
         }
 
         TeleportableCampfire campfire = campfireOptional.get();
+        if (player.getLevel() < teleportLevelCost && player.getGameMode() != GameMode.CREATIVE) {
+            player.sendMessage(String.format(
+                    "§4You don't have enough exp levels. You need at least §6%d§4 to travel", teleportLevelCost));
+            return;
+        }
 
         // First let's get some effects on the player
         player.addPotionEffect(new PotionEffect(PotionEffectType.NAUSEA, 1000, 2));
@@ -167,6 +173,9 @@ public class TeleportableCampfireModule {
 
             Bukkit.getScheduler().callSyncMethod(plugin, () -> {
                 player.removePotionEffect(PotionEffectType.NAUSEA);
+                int newLevel = player.getLevel() - teleportLevelCost;
+                player.setLevel(Math.max(newLevel, 0));
+
                 // Play the sound at the original place
                 playTeleportSound(player);
                 // Teleport
@@ -174,6 +183,8 @@ public class TeleportableCampfireModule {
                 player.teleport(campfire.getTeleportPoint().clone().add(0.5, 0, 0.5));
                 // Play sound at the new place
                 playTeleportSound(player);
+
+                player.getWorld().playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 0.1f, 0.1f);
 
                 return null;
             });
