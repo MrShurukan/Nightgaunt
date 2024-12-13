@@ -182,12 +182,6 @@ public class TeleportableCampfireModule {
             }
         }
 
-        if (player.getLevel() < teleportLevelCost && player.getGameMode() != GameMode.CREATIVE) {
-            player.sendMessage(String.format(
-                    "§4You don't have enough exp levels. You need at least §6%d§4 to travel", teleportLevelCost));
-            return;
-        }
-
         // First let's get some effects on the player
         player.addPotionEffect(new PotionEffect(PotionEffectType.NAUSEA, 1000, 2));
         player.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, 100, 2));
